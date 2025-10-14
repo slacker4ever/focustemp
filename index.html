@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Focus Pet — Firebase Edition</title>
+
+<!-- Fredoka font -->
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+
+<!-- Lottie + Chart.js + Firebase -->
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Firebase (modular compat) -->
+<script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-firestore-compat.js"></script>
+
+<style>
+  :root{
+    --bg1: linear-gradient(180deg,#032925,#053e3a,#0a3140);
+    --card: rgba(255,255,255,0.04);
+    --muted: #b9d6d1;
+    --accent1: #8de0c7;
+    --accent3: #c3b4ff;
+    --soft-shadow: 0 8px 30px rgba(2,12,10,0.55);
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:'Fredoka',system-ui,-apple-system,Helvetica,Arial;color:#e8fbf6;background:var(--bg1)}
+  .app{max-width:980px;margin:18px auto;padding:18px;display:flex;flex-direction:column;gap:14px}
+  header{display:flex;align-items:center;justify-content:space-between}
+  .brand{display:flex;gap:12px;align-items:center}
+  .logo{width:46px;height:46px;border-radius:12px;background:linear-gradient(90deg,var(--accent1),var(--accent3));display:flex;align-items:center;justify-content:center}
+  h1{font-size:1.05rem;margin:0}
+  .top-cards{display:flex;gap:12px}
+  .card-mini{background:var(--card);padding:10px 14px;border-radius:12px;box-shadow:var(--soft-shadow)}
+  .card-mini .label{font-size:.8rem;color:var(--muted)}
+  .card-mini .val{font-weight:700;font-size:1rem;margin-top:6px}
+
+  /* main */
+  .center-wrap{display:flex;gap:22px;align-items:flex-start;justify-content:center;flex-wrap:wrap}
+  .focus-area{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:20px;padding:18px;box-shadow:var(--soft-shadow);width:560px;min-height:420px;display:flex;flex-direction:column;align-items:center;gap:12px}
+  .timer-card{width:340px;height:340px;border-radius:999px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));position:relative}
+  .timer-inner{position:absolute;inset:20%;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:999px;background:rgba(255,255,255,0.02)}
+  #time{font-size:2.6rem;font-weight:700}
+  .start-big{margin-top:12px;background:linear-gradient(90deg,var(--accent1),var(--accent3));border:none;color:#052;padding:12px 18px;border-radius:999px;cursor:pointer}
+
+  lottie-player#petAnim{width:170px;height:170px;pointer-events:auto;display:block;margin:0 auto}
+
+  .side-panel{min-width:320px;display:flex;flex-direction:column;gap:12px}
+  .panel{background:var(--card);padding:12px;border-radius:12px;box-shadow:var(--soft-shadow)}
+  .shop-grid{display:flex;flex-wrap:wrap;gap:10px}
+  .shop-item{background:linear-gradient(180deg,rgba(255,255,255,0.015),rgba(255,255,255,0.01));padding:10px;border-radius:10px;width:calc(50% - 6px);text-align:center}
+  .shop-item button{margin-top:8px;padding:8px;border-radius:8px;border:none;background:var(--accent1);color:#052;cursor:pointer;font-weight:700}
+
+  .charts{display:flex;flex-direction:column;gap:8px;align-items:center}
+  .period-tabs{display:flex;gap:8px;justify-content:center;margin-bottom:6px}
+  .tab{padding:8px 12px;border-radius:999px;background:transparent;border:1px solid rgba(255,255,255,0.03);cursor:pointer}
+  .tab.active{background:linear-gradient(90deg,var(--accent1),var(--accent3));color:#052;font-weight:700}
+
+  .login-panel{display:flex;gap:8px;align-items:center}
+  input.field{padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:#eaf9f3}
+  button.small{padding:8px 12px;border-radius:8px;border:none;background:var(--accent1);color:#052;cursor:pointer}
+
+  @media (max-width:920px){ .center-wrap{flex-direction:column;align-items:center} .focus-area{width:92%} .side-panel{width:92%} }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="brand">
+      <div class="logo">🐾</div>
+      <div>
+        <h1>Focus Pet</h1>
+        <div style="color:#b9d6d1;font-size:.9rem">Sign up to save progress across devices</div>
+      </div>
+    </div>
+
+    <div class="top-cards">
+      <!-- removed Usage Time card as requested -->
+      <div class="card-mini">
+        <div class="label">Focus Time (today)</div>
+        <div class="val" id="todayTotal">0m</div>
+      </div>
+      <div class="card-mini">
+        <div class="label">Coins</div>
+        <div class="val" id="coinCount">0</div>
+      </div>
+      <div class="card-mini">
+        <div class="label">Account</div>
+        <div id="accountArea" style="margin-top:6px">
+          <!-- login UI -->
+          <div id="signedOut" class="login-panel">
+            <input id="email" class="field" placeholder="email" />
+            <input id="password" class="field" placeholder="password" type="password"/>
+            <button id="btnSignup" class="small">Sign up</button>
+            <button id="btnLogin" class="small">Log in</button>
+          </div>
+          <div id="signedIn" style="display:none">
+            <div id="displayName" style="font-weight:700"></div>
+            <button id="btnLogout" class="small">Log out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="center-wrap">
+
+    <section class="focus-area">
+      <div class="timer-card" aria-label="focus timer">
+        <div style="position:absolute;top:28px;left:50%;transform:translateX(-50%);">
+          <!-- pet -->
+          <lottie-player id="petAnim" src="Cat Pookie.json" background="transparent" speed="1" loop autoplay></lottie-player>
+        </div>
+
+        <div class="timer-inner" style="width:62%;height:62%;">
+          <div id="time">00:00</div>
+          <div id="petStatus" style="color:#b9d6d1">Your pet is sleepy...</div>
+          <button class="start-big" id="startBig">Start</button>
+        </div>
+        <!-- SVG ring -->
+        <svg width="100%" height="100%" viewBox="0 0 340 340" preserveAspectRatio="xMidYMid meet" style="position:absolute;left:0;top:0;pointer-events:none">
+          <defs>
+            <linearGradient id="g1"><stop offset="0" stop-color="#8de0c7"/><stop offset="1" stop-color="#c3b4ff"/></linearGradient>
+          </defs>
+          <circle cx="170" cy="170" r="150" stroke="rgba(255,255,255,0.03)" stroke-width="12" fill="none"></circle>
+          <circle id="ring" cx="170" cy="170" r="150" stroke="url(#g1)" stroke-width="12" fill="none" stroke-linecap="round" transform="rotate(-90 170 170)"></circle>
+        </svg>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="small action" id="start">Start</button>
+        <button class="small action" id="pause">Pause</button>
+        <button class="small action" id="reset">Reset</button>
+      </div>
+    </section>
+
+    <aside class="side-panel">
+      <div class="panel">
+        <h3>Shop</h3>
+        <div class="shop-grid">
+          <div class="shop-item">🍖 Feed Pet<br><strong>10 coins</strong><div><button onclick="feedPet()">Buy</button></div></div>
+          <div class="shop-item">🧸 Play<br><strong>15 coins</strong><div><button onclick="playWithPet()">Buy</button></div></div>
+          <div class="shop-item">🌈 Skin<br><strong>50 coins</strong><div><button onclick="buySkin()">Buy</button></div></div>
+          <div class="shop-item">✨ Tiny boost<br><strong>6 coins</strong><div><button onclick="tinyBoost()">Buy</button></div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Progress</h3>
+        <div class="period-tabs">
+          <button class="tab active" data-period="daily">Daily</button>
+          <button class="tab" data-period="weekly">Weekly</button>
+          <button class="tab" data-period="monthly">Monthly</button>
+          <button class="tab" data-period="yearly">Yearly</button>
+        </div>
+        <div class="charts">
+          <canvas id="pieChart" width="260" height="200"></canvas>
+          <canvas id="barChart" width="300" height="160"></canvas>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px">
+            <div style="color:var(--muted)">Weekly average</div>
+            <div id="weeklyAvg" style="font-weight:700">0 min</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+  </main>
+</div>
+
+<script>
+// Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyC8pXgerNDoKatmVcOtXl7j8_gxY3y3MB8",
+  authDomain: "focuspet-10e9f.firebaseapp.com",
+  projectId: "focuspet-10e9f",
+  storageBucket: "focuspet-10e9f.firebasestorage.app",
+  messagingSenderId: "737711366647",
+  appId: "1:737711366647:web:5bf10ef76ee8499e350ef2",
+  measurementId: "G-T88DZ14DZZ"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const analytics = getAnalytics(app);const FIREBASE_CONFIG = {
+  apiKey: "REPLACE_WITH_YOURS",
+  authDomain: "REPLACE_WITH_YOURS",
+  projectId: "REPLACE_WITH_YOURS",
+  // rest...
+};
+
+/* Initialize Firebase */
+firebase.initializeApp(FIREBASE_CONFIG);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+/* App state */
+const RING = document.getElementById('ring');
+const RADIUS = 150;
+const CIRC = 2 * Math.PI * RADIUS;
+RING.style.strokeDasharray = CIRC;
+RING.style.strokeDashoffset = CIRC;
+
+const timeEl = document.getElementById('time');
+const petStatus = document.getElementById('petStatus');
+const petAnim = document.getElementById('petAnim');
+const coinCountEl = document.getElementById('coinCount');
+const todayTotalEl = document.getElementById('todayTotal');
+
+const startBtn = document.getElementById('start');
+const pauseBtn = document.getElementById('pause');
+const resetBtn = document.getElementById('reset');
+const startBig = document.getElementById('startBig');
+
+let seconds = 0;
+let timer = null;
+let isRunning = false;
+
+/* per-user state */
+let currentUser = null;
+let coins = 0;
+let sessions = []; // {startISO, secs}
+let skinsOwned = [];
+
+/* --------- UI: auth --------- */
+const signedOutEl = document.getElementById('signedOut');
+const signedInEl = document.getElementById('signedIn');
+const displayNameEl = document.getElementById('displayName');
+document.getElementById('btnSignup').addEventListener('click', async ()=>{
+  const email = document.getElementById('email').value.trim();
+  const pwd = document.getElementById('password').value;
+  if(!email || !pwd){ alert('Enter email & password'); return; }
+  try{
+    const cred = await auth.createUserWithEmailAndPassword(email, pwd);
+    // create initial user doc
+    const uid = cred.user.uid;
+    await db.collection('users').doc(uid).set({ coins:0, sessions:[], skins:[] });
+    alert('Account created. You are logged in.');
+  }catch(err){ alert('Sign up error: '+err.message); }
+});
+document.getElementById('btnLogin').addEventListener('click', async ()=>{
+  const email = document.getElementById('email').value.trim();
+  const pwd = document.getElementById('password').value;
+  try{ await auth.signInWithEmailAndPassword(email, pwd); }
+  catch(err){ alert('Login error: '+err.message); }
+});
+document.getElementById('btnLogout').addEventListener('click', ()=> auth.signOut());
+
+/* ---------- auth observer ---------- */
+auth.onAuthStateChanged(async user=>{
+  if(user){
+    currentUser = user;
+    signedOutEl.style.display = 'none';
+    signedInEl.style.display = 'block';
+    displayNameEl.textContent = user.email;
+    // load user doc
+    const docRef = db.collection('users').doc(user.uid);
+    const doc = await docRef.get();
+    if(doc.exists){
+      const data = doc.data();
+      coins = data.coins || 0;
+      sessions = data.sessions || [];
+      skinsOwned = data.skins || [];
+    } else {
+      // create
+      await docRef.set({ coins:0, sessions:[], skins:[] });
+      coins = 0; sessions = []; skinsOwned = [];
+    }
+    coinCountEl.textContent = coins;
+    renderCharts();
+    updateTodayTotal();
+  } else {
+    currentUser = null;
+    signedOutEl.style.display = 'block';
+    signedInEl.style.display = 'none';
+    // fall back to localStorage (guest)
+    coins = parseInt(localStorage.getItem('fp_coins')||'0');
+    sessions = JSON.parse(localStorage.getItem('fp_sessions')||'[]');
+    skinsOwned = JSON.parse(localStorage.getItem('fp_skins')||'[]');
+    coinCountEl.textContent = coins;
+    renderCharts();
+    updateTodayTotal();
+  }
+});
+
+/* ---------- helpers ---------- */
+function fmtTime(s){ const m=Math.floor(s/60).toString().padStart(2,'0'); const ss=(s%60).toString().padStart(2,'0'); return `${m}:${ss}`; }
+function saveToBackend(){
+  if(currentUser){
+    // update the user's doc (atomic update)
+    const docRef = db.collection('users').doc(currentUser.uid);
+    return docRef.set({ coins, sessions, skins: skinsOwned }, { merge:true });
+  } else {
+    // guest fallback
+    localStorage.setItem('fp_coins', String(coins));
+    localStorage.setItem('fp_sessions', JSON.stringify(sessions));
+    localStorage.setItem('fp_skins', JSON.stringify(skinsOwned));
+    return Promise.resolve();
+  }
+}
+
+/* ---------- timer logic (fixed behavior) ---------- */
+let currentSessionStart = null;
+function updateDisplay(){
+  timeEl.textContent = fmtTime(seconds);
+  coinCountEl.textContent = coins;
+  updateRing();
+  updatePet();
+  updateTodayTotal();
+}
+function updateRing(){
+  const offset = CIRC - (seconds % 60) / 60 * CIRC;
+  RING.style.strokeDashoffset = offset;
+}
+function updatePet(){
+  if(seconds < 30){ petAnim.setSpeed(0.6); petStatus.textContent = "Your pet is sleepy..."; }
+  else if(seconds < 60){ petAnim.setSpeed(1); petStatus.textContent = "Your pet is waking up!"; }
+  else { petAnim.setSpeed(1.5); petStatus.textContent = "Your pet is super happy!"; }
+}
+function startTimer(){
+  if(isRunning) return;
+  isRunning = true;
+  currentSessionStart = new Date().toISOString();
+  timer = setInterval(()=>{
+    seconds++;
+    if(seconds % 10 === 0){
+      coins++; coinCountEl.textContent = coins;
+      // sync coins increment immediately if logged in
+      if(currentUser) saveToBackend();
+      else localStorage.setItem('fp_coins', String(coins));
+    }
+    updateDisplay();
+  },1000);
+  startBtn.disabled = true; pauseBtn.disabled = false; startBig.disabled = true;
+}
+async function pauseTimer(){
+  if(!isRunning) return;
+  isRunning = false;
+  clearInterval(timer); timer = null;
+  // record session
+  const sessionObj = { startISO: currentSessionStart, secs: seconds };
+  sessions.push(sessionObj);
+  // reset seconds for next session
+  seconds = 0;
+  currentSessionStart = null;
+  // save to backend/local
+  await saveToBackend();
+  updateDisplay();
+  renderCharts();
+  startBtn.disabled = false; pauseBtn.disabled = true; startBig.disabled = false;
+}
+async function resetTimer(){
+  if(isRunning) await pauseTimer();
+  seconds = 0; updateDisplay();
+}
+startBtn.addEventListener('click', startTimer);
+pauseBtn.addEventListener('click', pauseTimer);
+resetBtn.addEventListener('click', resetTimer);
+startBig.addEventListener('click', startTimer);
+
+/* ---------- Shop actions ---------- */
+function react(speed, text, msg){
+  petAnim.setSpeed(speed);
+  petStatus.textContent = text;
+  petAnim.play();
+  const clear = () => { petAnim.setSpeed(1); updatePet(); };
+  setTimeout(clear, 3500);
+}
+
+async function feedPet(){
+  if(coins >= 10){ coins -= 10; coinCountEl.textContent = coins; react(2,'Your pet enjoyed the meal!',''); await saveToBackend(); }
+  else alert('Not enough coins!');
+}
+async function playWithPet(){
+  if(coins >= 15){ coins -= 15; coinCountEl.textContent = coins; react(2.6,'Your pet is playing happily!',''); await saveToBackend(); }
+  else alert('Not enough coins!');
+}
+async function buySkin(){
+  if(coins >= 50){ coins -= 50; skinsOwned.push('cute-skin'); await saveToBackend(); react(1.8,'You bought a skin!',''); }
+  else alert('Not enough coins!');
+}
+async function tinyBoost(){
+  if(coins >= 6){ coins -= 6; coins += 1; coinCountEl.textContent = coins; await saveToBackend(); react(1.8,'Tiny boost!',''); }
+  else alert('Not enough coins!');
+}
+
+/* ---------- Progress charts ---------- */
+const pieCtx = document.getElementById('pieChart').getContext('2d');
+const barCtx = document.getElementById('barChart').getContext('2d');
+let pieChart = null, barChart = null;
+let currentPeriod = 'daily';
+
+function aggregateSessions(){
+  const map = {};
+  for(const s of sessions){
+    // s.startISO should be valid ISO
+    try{
+      const d = new Date(s.startISO);
+      if(isNaN(d)) continue;
+      const key = d.toISOString().split('T')[0];
+      map[key] = (map[key]||0) + s.secs;
+    }catch(e){}
+  }
+  return map;
+}
+function daysAgoDate(n){
+  const d = new Date(); d.setDate(d.getDate()-n); return d;
+}
+function lastNDaysLabels(n){
+  const arr=[]; const now=new Date();
+  for(let i=n-1;i>=0;i--){ const d=new Date(); d.setDate(now.getDate()-i); arr.push(d.toLocaleDateString(undefined,{weekday:'short'})); }
+  return arr;
+}
+function weeklyBarData(map){
+  const arr=[]; const labels=[];
+  for(let i=6;i>=0;i--){
+    const d = daysAgoDate(i);
+    const key = d.toISOString().split('T')[0];
+    arr.push(Math.round((map[key]||0)/60));
+    labels.push(d.toLocaleDateString(undefined,{weekday:'short'}));
+  }
+  return {labels, data: arr};
+}
+function lastNMonthsLabels(n){
+  const arr=[]; const now=new Date();
+  for(let i=n-1;i>=0;i--){
+    const d=new Date(now.getFullYear(), now.getMonth()-i, 1);
+    arr.push(d.toLocaleDateString(undefined,{month:'short'}));
+  }
+  return arr;
+}
+function monthlyBarData(map){
+  const now=new Date(); const labels=[]; const arr=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(), now.getMonth()-i, 1);
+    const month = d.getMonth(); const year = d.getFullYear();
+    let total=0;
+    for(const k in map){ const dt = new Date(k); if(dt.getMonth()===month && dt.getFullYear()===year) total += map[k]; }
+    arr.push(Math.round(total/60)); labels.push(d.toLocaleDateString(undefined,{month:'short'}));
+  }
+  return {labels, data: arr};
+}
+function lastNYearsLabels(n){
+  const now=new Date(); const yrs=[]; for(let i=n-1;i>=0;i--) yrs.push(String(now.getFullYear()-i)); return yrs;
+}
+function yearlyBarData(map){
+  const now=new Date(); const arr=[]; const labels=[];
+  for(let i=4;i>=0;i--){
+    const y = now.getFullYear()-i; let total=0;
+    for(const k in map){ const dt = new Date(k); if(dt.getFullYear()===y) total += map[k]; }
+    arr.push(Math.round(total/60)); labels.push(String(y));
+  }
+  return {labels, data: arr};
+}
+
+function getPeriodData(period){
+  const map = aggregateSessions();
+  const now = new Date();
+  if(period === 'daily'){
+    const todayKey = now.toISOString().split('T')[0];
+    const todaySecs = map[todayKey] || 0;
+    const restThisWeek = (Object.values(map).reduce((a,b)=>a+b,0) - todaySecs) || 0;
+    return { labels: ['Today', 'Earlier this week'], pie: [Math.round(todaySecs/60), Math.round(restThisWeek/60)], bar: weeklyBarData(map) };
+  } else if(period === 'weekly'){
+    return { labels: lastNDaysLabels(7), pie: null, bar: weeklyBarData(map) };
+  } else if(period === 'monthly'){
+    return { labels: lastNMonthsLabels(6), pie: null, bar: monthlyBarData(map) };
+  } else {
+    return { labels: lastNYearsLabels(5), pie: null, bar: yearlyBarData(map) };
+  }
+}
+
+function renderCharts(){
+  const pd = getPeriodData(currentPeriod);
+  if(pd.pie){
+    const pieData = { labels: pd.labels, datasets: [{ data: pd.pie, backgroundColor: ['#8de0c7','rgba(255,255,255,0.06)'] }] };
+    if(pieChart) pieChart.destroy();
+    pieChart = new Chart(pieCtx, { type:'doughnut', data:pieData, options:{plugins:{legend:{position:'bottom',labels:{color:'#cde'}}}} });
+  } else {
+    if(pieChart) { pieChart.destroy(); pieChart = null; const ctx = document.getElementById('pieChart').getContext('2d'); ctx.clearRect(0,0,260,200); }
+    const total = pd.bar.data.reduce((a,b)=>a+b,0);
+    const other = Math.max(0, Math.round(total*0.2));
+    const pieData = { labels:['Period total','Other'], datasets:[{ data:[total,other], backgroundColor:['#8de0c7','rgba(255,255,255,0.06)'] }] };
+    pieChart = new Chart(pieCtx, { type:'doughnut', data:pieData });
+  }
+  const barData = { labels: pd.bar.labels, datasets: [{ label:'Focus (minutes)', data: pd.bar.data, backgroundColor:'#c3b4ff' }] };
+  if(barChart) barChart.destroy();
+  barChart = new Chart(barCtx, { type:'bar', data:barData, options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true},x:{}}}});
+  // weekly avg
+  const weeklyTotal = weeklyBarData(aggregateSessions()).data.reduce((a,b)=>a+b,0);
+  const weeklyAvg = (weeklyTotal/7).toFixed(1);
+  document.getElementById('weeklyAvg').textContent = `${weeklyAvg} min`;
+}
+
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    currentPeriod = t.dataset.period;
+    renderCharts();
+  });
+});
+
+/* expose shop functions to global for inline onclicks */
+window.feedPet = feedPet;
+window.playWithPet = playWithPet;
+window.buySkin = buySkin;
+window.tinyBoost = tinyBoost;
+
+/* init */
+function updateTodayTotal(){
+  const map = aggregateSessions();
+  const todayKey = new Date().toISOString().split('T')[0];
+  const mins = Math.round((map[todayKey]||0)/60);
+  todayTotalEl.textContent = `${mins}m`;
+}
+renderCharts();
+
+/* keyboard shortcut */
+document.body.addEventListener('keydown', (e)=> {
+  if(e.code === 'Space'){ e.preventDefault(); if(isRunning) pauseTimer(); else startTimer(); }
+});
+
+/* ensure charts re-render when sessions change */
+const originalPause = pauseTimer;
+pauseTimer = async function(){
+  await originalPause();
+  renderCharts();
+  updateTodayTotal();
+};
+</script>
+</body>
+</html>

@@ -189,10 +189,6 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 
-let firebaseEnabled = false;
-let auth = null;
-let db = null;
-
 // initialize firebase only if config provided
 try {
   if (FIREBASE_CONFIG && FIREBASE_CONFIG.apiKey) {
@@ -594,3 +590,4 @@ document.body.addEventListener('keydown', (e) => {
 </script>
 </body>
 </html>
+

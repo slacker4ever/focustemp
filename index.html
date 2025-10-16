@@ -1,486 +1,196 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
-  <title>Focus Pet — Local</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Focus Pet — Local</title>
 
-  <!-- Fredoka (cute, rounded) -->
-  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<!-- Font + Libraries -->
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-  <!-- Lottie + Chart.js -->
-  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root {
+  --bg: linear-gradient(180deg, #073c35, #0a4540 40%, #05343a);
+  --card: rgba(255,255,255,0.05);
+  --muted: #b9d6d1;
+  --accent1: #8de0c7;
+  --accent2: #c3b4ff;
+  --shadow: 0 8px 25px rgba(0,0,0,0.4);
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  font-family:'Fredoka',system-ui;
+  background:var(--bg);
+  color:#eaf9f4;
+  overflow-x:hidden;
+}
+.app{max-width:920px;margin:10px auto;padding:14px;display:flex;flex-direction:column;gap:16px;}
+header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;}
+.brand{display:flex;align-items:center;gap:10px;}
+.logo{width:42px;height:42px;border-radius:10px;background:linear-gradient(90deg,var(--accent1),var(--accent2));display:flex;align-items:center;justify-content:center;font-weight:700;}
+h1{font-size:1rem;margin:0;}
+.top-cards{display:flex;gap:12px;align-items:center;}
+.card-mini{background:var(--card);padding:10px 14px;border-radius:12px;box-shadow:var(--shadow);min-width:110px;text-align:center;}
+.label{font-size:0.8rem;color:var(--muted);}
+.val{font-weight:700;font-size:1.05rem;margin-top:6px;}
 
-  <style>
-    :root{
-      --bg1: linear-gradient(180deg,#073c35,#0a4540 40%, #05343a);
-      --card: rgba(255,255,255,0.04);
-      --muted: #b9d6d1;
-      --accent1: #8de0c7;
-      --accent3: #c3b4ff;
-      --soft-shadow: 0 8px 30px rgba(2,12,10,0.55);
-      --radius: 14px;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%;margin:0;font-family:'Fredoka',system-ui,-apple-system,Helvetica,Arial;color:#eaf9f4;background:var(--bg1)}
-    .app{max-width:920px;margin:6px auto;padding:14px;display:flex;flex-direction:column;gap:12px}
-    header{display:flex;align-items:center;justify-content:space-between;gap:12px}
-    .brand{display:flex;gap:12px;align-items:center}
-    .logo{width:42px;height:42px;border-radius:10px;background:linear-gradient(90deg,var(--accent1),var(--accent3));display:flex;align-items:center;justify-content:center;font-weight:700}
-    h1{font-size:1.05rem;margin:0}
-    .top-cards{display:flex;gap:12px;align-items:center}
-    .card-mini{background:var(--card);padding:10px 14px;border-radius:12px;box-shadow:var(--soft-shadow);min-width:96px;text-align:center}
-    .card-mini .label{font-size:.78rem;color:var(--muted)}
-    .card-mini .val{font-weight:700;font-size:1.05rem;margin-top:6px}
+.focus-area{
+  display:flex;flex-direction:column;align-items:center;
+  background:rgba(255,255,255,0.02);
+  border-radius:18px;
+  padding:18px;
+  box-shadow:var(--shadow);
+}
+.timer-card{
+  width:320px;height:320px;border-radius:50%;
+  background:rgba(255,255,255,0.03);
+  position:relative;display:flex;align-items:center;justify-content:center;
+}
+.pet-top{position:absolute;top:10%;left:50%;transform:translateX(-50%);}
+lottie-player{width:150px;height:150px;}
+.timer-inner{position:absolute;bottom:15%;left:50%;transform:translateX(-50%);text-align:center;}
+#time{font-size:2.4rem;font-weight:700;}
+#petStatus{color:var(--muted);font-size:0.9rem;margin-top:4px;}
 
-    .center-wrap{display:flex;gap:22px;align-items:flex-start;justify-content:center;flex-wrap:wrap}
-    .focus-area{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:18px;padding:18px;box-shadow:var(--soft-shadow);width:100%;max-width:640px;min-height:420px;display:flex;flex-direction:column;align-items:center;gap:12px}
+.controls{display:flex;gap:12px;margin-top:16px;}
+button.control{
+  background:var(--accent1);
+  border:none;
+  color:#053;
+  padding:10px 18px;
+  border-radius:12px;
+  font-weight:700;
+  cursor:pointer;
+  min-width:88px;
+  box-shadow:var(--shadow);
+}
 
-    /* timer card */
-    .timer-card{width:320px;height:320px;border-radius:999px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));position:relative;display:flex;align-items:center;justify-content:center}
-    .pet-top{position:absolute;top:8%;left:50%;transform:translateX(-50%);display:flex;align-items:center;justify-content:center}
-    lottie-player#petAnim{width:150px;height:150px;display:block;margin:0 auto}
-    .timer-inner{position:absolute;bottom:12%;left:50%;transform:translateX(-50%);width:72%;height:36%;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:999px;background:rgba(255,255,255,0.015);padding:6px}
-    #time{font-size:2.4rem;font-weight:700;letter-spacing:1px}
-    .sub-text{color:var(--muted);margin-top:6px}
+.center-wrap{display:flex;flex-wrap:wrap;justify-content:center;align-items:flex-start;gap:24px;margin-top:10px;}
+.side-panel{width:100%;max-width:360px;display:flex;flex-direction:column;gap:16px;}
+.panel{background:var(--card);border-radius:14px;padding:14px;box-shadow:var(--shadow);}
+.shop-grid{display:flex;flex-wrap:wrap;gap:10px;}
+.shop-item{background:rgba(255,255,255,0.02);padding:10px;border-radius:10px;width:calc(50% - 6px);text-align:center;}
+.shop-item button{margin-top:6px;padding:8px;border-radius:8px;border:none;background:var(--accent1);color:#053;cursor:pointer;font-weight:700;}
 
-    .controls{display:flex;gap:12px;margin-top:14px}
-    button.control{
-      background:var(--accent1);border:none;color:#053;padding:10px 18px;border-radius:12px;font-weight:700;cursor:pointer;min-width:88px;
-      box-shadow:0 8px 20px rgba(0,0,0,0.35)
-    }
-    button.control.secondary{background:transparent;color:#eaf9f4;border:1px solid rgba(255,255,255,0.06)}
+.charts{display:flex;flex-direction:column;align-items:center;gap:8px;margin-top:10px;}
+.period-tabs{display:flex;gap:8px;justify-content:center;margin-bottom:8px;flex-wrap:wrap;}
+.tab{padding:8px 12px;border-radius:999px;background:transparent;border:1px solid rgba(255,255,255,0.08);cursor:pointer;color:#d6f6ee;}
+.tab.active{background:linear-gradient(90deg,var(--accent1),var(--accent2));color:#052;font-weight:700;}
+#weeklyAvgContainer{display:flex;justify-content:space-between;width:100%;max-width:300px;color:var(--muted);font-size:0.9rem;margin-top:6px;margin-bottom:24px;}
 
-    .side-panel{width:100%;max-width:360px;display:flex;flex-direction:column;gap:12px}
-    .panel{background:var(--card);padding:12px;border-radius:12px;box-shadow:var(--soft-shadow)}
-    .shop-grid{display:flex;flex-wrap:wrap;gap:10px}
-    .shop-item{background:linear-gradient(180deg,rgba(255,255,255,0.015),rgba(255,255,255,0.01));padding:10px;border-radius:10px;width:calc(50% - 6px);text-align:center}
-    .shop-item button{margin-top:8px;padding:8px;border-radius:8px;border:none;background:var(--accent1);color:#053;cursor:pointer;font-weight:700}
-
-    .charts{display:flex;flex-direction:column;gap:8px;align-items:center}
-    .period-tabs{display:flex;gap:8px;justify-content:center;margin-bottom:6px}
-    .tab{padding:8px 12px;border-radius:999px;background:transparent;border:1px solid rgba(255,255,255,0.03);cursor:pointer;color:#d6f6ee}
-    .tab.active{background:linear-gradient(90deg,var(--accent1),var(--accent3));color:#052;font-weight:700}
-
-    .bottom-nav{position:fixed;left:50%;transform:translateX(-50%);bottom:12px;background:rgba(0,0,0,0.22);padding:8px 18px;border-radius:999px;display:flex;gap:34px;backdrop-filter: blur(6px);box-shadow:0 8px 30px rgba(0,0,0,0.6)}
-    .nav-btn{color:#bff0e6;background:transparent;border:none;padding:8px 10px;border-radius:10px;cursor:pointer;font-weight:700}
-    .nav-btn.active{background:linear-gradient(90deg,var(--accent1),var(--accent3));color:#052}
-
-    .top-row-placeholder{display:flex;gap:12px;align-items:center}
-    @media (max-width:920px){
-      .center-wrap{flex-direction:column;align-items:center}
-      .side-panel{width:92%}
-      .timer-card{width:300px;height:300px}
-    }
-  </style>
+@media(max-width:920px){.center-wrap{flex-direction:column;align-items:center}.side-panel{max-width:100%}}
+</style>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <div class="brand">
-        <div class="logo">🐾</div>
-        <div>
-          <h1>Focus Pet</h1>
-          <div style="color:var(--muted);font-size:.9rem">Raise a pet by focusing — data stays on your device</div>
-        </div>
-      </div>
+<div class="app">
+<header>
+  <div class="brand">
+    <div class="logo">🐾</div>
+    <div>
+      <h1>Focus Pet</h1>
+      <div style="font-size:0.9rem;color:var(--muted)">Raise your pet by focusing!</div>
+    </div>
+  </div>
+  <div class="top-cards">
+    <div class="card-mini">
+      <div class="label">Total Focus Time</div>
+      <div class="val" id="totalFocusVal">0 m</div>
+    </div>
+    <div class="card-mini">
+      <div class="label">Coins</div>
+      <div class="val" id="coinCount">0</div>
+    </div>
+  </div>
+</header>
 
-      <div class="top-cards">
-        <!-- Focus Today (moved to left, small like Coins) -->
-        <div class="card-mini" id="focusTodayCard">
-          <div class="label">Focus Today</div>
-          <div class="val" id="focusTodayVal">0 m</div>
-        </div>
+<main class="center-wrap">
+<section class="focus-area">
+  <div class="timer-card">
+    <div class="pet-top">
+      <lottie-player id="petAnim" src="Cat Pookie.json" background="transparent" speed="1" loop autoplay></lottie-player>
+    </div>
+    <div class="timer-inner">
+      <div id="time">00:00</div>
+      <div id="petStatus">Your pet is sleepy...</div>
+    </div>
+    <svg width="100%" height="100%" viewBox="0 0 320 320" preserveAspectRatio="xMidYMid meet" style="position:absolute;left:0;top:0;pointer-events:none">
+      <defs><linearGradient id="g1"><stop offset="0" stop-color="#8de0c7"/><stop offset="1" stop-color="#c3b4ff"/></linearGradient></defs>
+      <circle cx="160" cy="160" r="140" stroke="rgba(255,255,255,0.03)" stroke-width="12" fill="none"></circle>
+      <circle id="ring" cx="160" cy="160" r="140" stroke="url(#g1)" stroke-width="12" fill="none" stroke-linecap="round" transform="rotate(-90 160 160)"></circle>
+    </svg>
+  </div>
+  <div class="controls">
+    <button class="control" id="startBtn">Start</button>
+    <button class="control" id="pauseBtn">Pause</button>
+    <button class="control" id="resetBtn">Reset</button>
+  </div>
+</section>
 
-        <!-- Coins card -->
-        <div class="card-mini">
-          <div class="label">Coins</div>
-          <div class="val" id="coinCount">0</div>
-        </div>
-      </div>
-    </header>
-
-    <main class="center-wrap">
-      <section class="focus-area" style="max-width:640px">
-        <div class="timer-card" aria-label="focus timer">
-          <div class="pet-top">
-            <!-- local Lottie file — must exist: Cat Pookie.json -->
-            <lottie-player id="petAnim" src="Cat Pookie.json" background="transparent" speed="1" loop autoplay></lottie-player>
-          </div>
-
-          <div class="timer-inner">
-            <div id="time">00:00</div>
-            <div class="sub-text" id="petStatus">Your pet is sleepy...</div>
-            <div style="height:6px"></div>
-            <button class="control" id="startBig" style="min-width:160px">Start</button>
-          </div>
-
-          <!-- decorative ring -->
-          <svg width="100%" height="100%" viewBox="0 0 320 320" preserveAspectRatio="xMidYMid meet" style="position:absolute;left:0;top:0;pointer-events:none">
-            <defs><linearGradient id="g1"><stop offset="0" stop-color="#8de0c7"/><stop offset="1" stop-color="#c3b4ff"/></linearGradient></defs>
-            <circle cx="160" cy="160" r="140" stroke="rgba(255,255,255,0.03)" stroke-width="12" fill="none"></circle>
-            <circle id="ring" cx="160" cy="160" r="140" stroke="url(#g1)" stroke-width="12" fill="none" stroke-linecap="round" transform="rotate(-90 160 160)"></circle>
-          </svg>
-        </div>
-
-        <div class="controls">
-          <button class="control" id="startBtn">Start</button>
-          <button class="control" id="pauseBtn">Pause</button>
-          <button class="control secondary" id="resetBtn">Reset</button>
-        </div>
-      </section>
-
-      <aside class="side-panel">
-        <div class="panel">
-          <h3 style="margin:6px 0">Shop</h3>
-          <div class="shop-grid">
-            <div class="shop-item">🍖 Feed<br><strong>10 coins</strong><div><button id="feedBtn">Buy</button></div></div>
-            <div class="shop-item">🧸 Play<br><strong>15 coins</strong><div><button id="playBtn">Buy</button></div></div>
-            <div class="shop-item">🌈 Skin<br><strong>50 coins</strong><div><button id="skinBtn">Buy</button></div></div>
-            <div class="shop-item">✨ Tiny boost<br><strong>6 coins</strong><div><button id="boostBtn">Buy</button></div></div>
-          </div>
-        </div>
-
-        <div class="panel">
-          <h3 style="margin:6px 0">Progress</h3>
-          <div class="period-tabs">
-            <button class="tab active" data-period="daily">Daily</button>
-            <button class="tab" data-period="weekly">Weekly</button>
-            <button class="tab" data-period="monthly">Monthly</button>
-            <button class="tab" data-period="yearly">Yearly</button>
-          </div>
-          <div class="charts">
-            <!-- removed pie chart as requested -->
-            <canvas id="barChart" width="320" height="180"></canvas>
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
-              <div style="color:var(--muted)">Weekly average</div>
-              <div id="weeklyAvg" style="font-weight:700">0 min</div>
-            </div>
-          </div>
-        </div>
-      </aside>
-    </main>
+<aside class="side-panel">
+  <div class="panel">
+    <h3>Shop</h3>
+    <div class="shop-grid">
+      <div class="shop-item">🍖 Feed<br><strong>10 coins</strong><button id="feedBtn">Buy</button></div>
+      <div class="shop-item">🧸 Play<br><strong>15 coins</strong><button id="playBtn">Buy</button></div>
+      <div class="shop-item">🌈 Skin<br><strong>50 coins</strong><button id="skinBtn">Buy</button></div>
+      <div class="shop-item">✨ Boost<br><strong>6 coins</strong><button id="boostBtn">Buy</button></div>
+    </div>
   </div>
 
-  <div class="bottom-nav" role="navigation" aria-label="bottom nav">
-    <button class="nav-btn active" id="navHome">Home</button>
-    <button class="nav-btn" id="navShop">Shop</button>
-    <button class="nav-btn" id="navProgress">Progress</button>
+  <div class="panel">
+    <h3>Progress</h3>
+    <div class="period-tabs">
+      <button class="tab active" data-period="daily">Daily</button>
+      <button class="tab" data-period="weekly">Weekly</button>
+      <button class="tab" data-period="monthly">Monthly</button>
+      <button class="tab" data-period="yearly">Yearly</button>
+    </div>
+    <div class="charts">
+      <canvas id="barChart" width="320" height="180"></canvas>
+      <div id="weeklyAvgContainer"><span>Weekly average</span><span id="weeklyAvg">0 min</span></div>
+    </div>
   </div>
+</aside>
+</main>
+</div>
 
 <script>
-/* ===========================
-   Focus Pet — Local version
-   =========================== */
-
-/* LocalStorage keys */
-const LS_COINS = 'fp_coins';
-const LS_SESSIONS = 'fp_sessions'; // array of {startISO, secs}
-
-/* DOM elements */
-const timeEl = document.getElementById('time');
-const petStatus = document.getElementById('petStatus');
-const petAnim = document.getElementById('petAnim');
-const coinEl = document.getElementById('coinCount');
-const focusTodayVal = document.getElementById('focusTodayVal');
-
-const ring = document.getElementById('ring');
-
-const startBig = document.getElementById('startBig');
-const startBtn = document.getElementById('startBtn');
-const pauseBtn = document.getElementById('pauseBtn');
-const resetBtn = document.getElementById('resetBtn');
-
-const feedBtn = document.getElementById('feedBtn');
-const playBtn = document.getElementById('playBtn');
-const skinBtn = document.getElementById('skinBtn');
-const boostBtn = document.getElementById('boostBtn');
-
-const tabs = document.querySelectorAll('.tab');
-const barCtx = document.getElementById('barChart').getContext('2d');
-let barChart = null;
-
-/* ring geometry */
-const RADIUS = 140;
-const CIRC = 2 * Math.PI * RADIUS;
-if (ring) { ring.style.strokeDasharray = String(CIRC); ring.style.strokeDashoffset = String(CIRC); }
-
-/* state */
-let seconds = 0;          // elapsed in current session (paused or running)
-let timer = null;
-let isRunning = false;
-let currentSessionStartISO = null;
-
-let coins = parseInt(localStorage.getItem(LS_COINS) || '0', 10) || 0;
-let sessions = JSON.parse(localStorage.getItem(LS_SESSIONS) || '[]'); // stored sessions
-
-/* Helpers */
-function fmtMMSS(s){
-  const m = Math.floor(s/60).toString().padStart(2,'0');
-  const ss = (s%60).toString().padStart(2,'0');
-  return `${m}:${ss}`;
-}
-function fmtHoursMinutes(totalSeconds){
-  const h = Math.floor(totalSeconds/3600);
-  const m = Math.floor((totalSeconds % 3600)/60);
-  if (h > 0) return `${h} h ${m} m`;
-  return `${m} m`;
-}
-function nowISO(){ return new Date().toISOString(); }
-
-/* Display updates */
-function updateDisplay(){
-  timeEl.textContent = fmtMMSS(seconds);
-  coinEl.textContent = coins;
-  updateRing();
-  updatePet();
-  updateFocusTodayDisplay();
-}
-function updateRing(){
-  if (!ring) return;
-  const offset = CIRC - (seconds % 60) / 60 * CIRC;
-  ring.style.strokeDashoffset = offset;
-}
-function updatePet(){
-  try{
-    if (!petAnim) return;
-    if (seconds < 30) { petAnim.setSpeed(0.6); petStatus.textContent = "Your pet is sleepy..."; }
-    else if (seconds < 60) { petAnim.setSpeed(1); petStatus.textContent = "Your pet is waking up!"; }
-    else { petAnim.setSpeed(1.5); petStatus.textContent = "Your pet is super happy!"; }
-  } catch(e){ console.warn('pet update error', e); }
-}
-
-/* Sessions aggregation */
-function aggregateSessions(){
-  // returns map date->seconds
-  const map = {};
-  for (const s of sessions){
-    try{
-      const d = new Date(s.startISO);
-      if (isNaN(d)) continue;
-      const key = d.toISOString().split('T')[0];
-      map[key] = (map[key] || 0) + s.secs;
-    } catch(e){ console.warn('agg error', e); }
-  }
-  return map;
-}
-function getTodayTotalSeconds(){
-  const map = aggregateSessions();
-  const todayKey = new Date().toISOString().split('T')[0];
-  let total = map[todayKey] || 0;
-  // include current session (if running or paused)
-  total += seconds;
-  return total;
-}
-function updateFocusTodayDisplay(){
-  const secs = getTodayTotalSeconds();
-  focusTodayVal.textContent = fmtHoursMinutes(secs);
-}
-
-/* Timer controls (pause/resume behavior) */
-function enableButtons(){
-  startBtn.disabled = isRunning;
-  startBig.disabled = isRunning;
-  pauseBtn.disabled = !isRunning;
-  // reset always enabled
-}
-function startTimer(){
-  if (isRunning) return;
-  isRunning = true;
-  if (!currentSessionStartISO) currentSessionStartISO = nowISO(); // only set start ISO if new session
-  timer = setInterval(()=>{
-    seconds++;
-    // award coin every 10 seconds of active running
-    if (seconds % 10 === 0) { coins++; localStorage.setItem(LS_COINS, String(coins)); }
-    updateDisplay();
-  }, 1000);
-  enableButtons();
-}
-function pauseTimer(){
-  if (!isRunning) return;
-  isRunning = false;
-  clearInterval(timer); timer = null;
-  // leave seconds intact — user can resume from same value
-  enableButtons();
-  updateDisplay();
-}
-function resetTimer(){
-  // Save this session to history if seconds > 0 or if there was a recorded start time
-  if (seconds > 0 && currentSessionStartISO){
-    sessions.push({ startISO: currentSessionStartISO, secs: seconds });
-    localStorage.setItem(LS_SESSIONS, JSON.stringify(sessions));
-  }
-  // reset current session state
-  seconds = 0;
-  currentSessionStartISO = null;
-  isRunning = false;
-  clearInterval(timer); timer = null;
-  enableButtons();
-  updateDisplay();
-  renderCharts();
-}
-
-/* Shop actions (reactions) */
-function react(speed, text){
-  try{ if (petAnim){ petAnim.setSpeed(speed); petStatus.textContent = text; petAnim.play(); } }
-  catch(e){ console.warn('react error', e); }
-  setTimeout(()=>{ if (petAnim){ petAnim.setSpeed(1); updatePet(); } }, 3000);
-}
-function feed(){
-  if (coins >= 10){ coins -= 10; localStorage.setItem(LS_COINS, String(coins)); updateDisplay(); react(2,'Your pet enjoyed the meal!'); }
-  else alert('Not enough coins');
-}
-function play(){
-  if (coins >= 15){ coins -= 15; localStorage.setItem(LS_COINS, String(coins)); updateDisplay(); react(2.6,'Your pet is playing happily!'); }
-  else alert('Not enough coins');
-}
-function buySkin(){
-  if (coins >= 50){ coins -= 50; localStorage.setItem(LS_COINS, String(coins)); updateDisplay(); react(1.8,'Skin purchased!'); }
-  else alert('Not enough coins');
-}
-function tinyBoost(){
-  if (coins >= 6){ coins -= 6; coins += 1; localStorage.setItem(LS_COINS, String(coins)); updateDisplay(); react(1.6,'Boost!'); }
-  else alert('Not enough coins');
-}
-
-/* Attach UI listeners safely */
-if (startBtn) startBtn.addEventListener('click', startTimer);
-if (startBig) startBig.addEventListener('click', startTimer);
-if (pauseBtn) pauseBtn.addEventListener('click', pauseTimer);
-if (resetBtn) resetBtn.addEventListener('click', resetTimer);
-
-if (feedBtn) feedBtn.addEventListener('click', feed);
-if (playBtn) playBtn.addEventListener('click', play);
-if (skinBtn) skinBtn.addEventListener('click', buySkin);
-if (boostBtn) boostBtn.addEventListener('click', tinyBoost);
-
-/* Keyboard space toggles start/pause */
-document.body.addEventListener('keydown', (e)=>{
-  if (e.code === 'Space'){ e.preventDefault(); if (isRunning) pauseTimer(); else startTimer(); }
-});
-
-/* Save current session on page unload (so accidental close won't lose progress)
-   We'll save the current running/paused session as a session record if seconds > 0.
-   This is a convenience — user still controls Reset to mark definite session end.
-*/
-window.addEventListener('beforeunload', ()=>{
-  try{
-    if (seconds > 0 && currentSessionStartISO){
-      sessions.push({ startISO: currentSessionStartISO, secs: seconds });
-      localStorage.setItem(LS_SESSIONS, JSON.stringify(sessions));
-      seconds = 0;
-      currentSessionStartISO = null;
-      localStorage.setItem(LS_COINS, String(coins));
-    }
-  } catch(e){ console.warn('beforeunload save error', e); }
-});
-
-/* ---------------- Charts (bar only) ---------------- */
-let currentPeriod = 'daily';
-
-function aggregateSessions(){
-  const map = {};
-  for (const s of sessions){
-    try{
-      const d = new Date(s.startISO);
-      if (isNaN(d)) continue;
-      const key = d.toISOString().split('T')[0];
-      map[key] = (map[key] || 0) + s.secs;
-    } catch(e){ console.warn('agg error', e); }
-  }
-  return map;
-}
-function daysAgoDate(n){ const d = new Date(); d.setDate(d.getDate()-n); return d; }
-
-function weeklyBars(map){
-  const labels = []; const data = [];
-  for (let i=6;i>=0;i--){
-    const d = daysAgoDate(i);
-    const key = d.toISOString().split('T')[0];
-    labels.push(d.toLocaleDateString(undefined,{weekday:'short'}));
-    data.push(Math.round((map[key]||0)/60)); // minutes
-  }
-  return { labels, data };
-}
-function monthlyBars(map){
-  const labels = []; const data = [];
-  const now = new Date();
-  for (let i=5;i>=0;i--){
-    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
-    labels.push(d.toLocaleDateString(undefined,{month:'short'}));
-    let total=0;
-    for (const k in map){ const dt = new Date(k); if (dt.getMonth()===d.getMonth() && dt.getFullYear()===d.getFullYear()) total += map[k]; }
-    data.push(Math.round(total/60));
-  }
-  return { labels, data };
-}
-function yearlyBars(map){
-  const labels = []; const data = [];
-  const now = new Date();
-  for (let i=4;i>=0;i--){
-    const yr = now.getFullYear()-i;
-    labels.push(String(yr));
-    let total=0;
-    for (const k in map){ const dt = new Date(k); if (dt.getFullYear()===yr) total += map[k]; }
-    data.push(Math.round(total/60));
-  }
-  return { labels, data };
-}
-
-function getPeriodBars(period){
-  const map = aggregateSessions();
-  if (period === 'daily' || period === 'weekly') return weeklyBars(map);
-  if (period === 'monthly') return monthlyBars(map);
-  return yearlyBars(map);
-}
-
-function renderBarChart(){
-  try{
-    const bars = getPeriodBars(currentPeriod);
-    const barData = { labels: bars.labels, datasets: [{ label:'Focus (min)', data: bars.data, backgroundColor:'#8de0c7' }] };
-    if (barChart) barChart.destroy();
-    barChart = new Chart(barCtx, { type:'bar', data: barData, options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}} });
-    // weekly average
-    const weekly = weeklyBars(aggregateSessions()).data;
-    const weeklyTotal = weekly.reduce((a,b)=>a+b,0);
-    const weeklyAvg = (weeklyTotal/7).toFixed(1);
-    document.getElementById('weeklyAvg').textContent = `${weeklyAvg} min`;
-  } catch(e){ console.warn('renderBarChart error', e); }
-}
-
-/* tabs */
-tabs.forEach(t=>{
-  t.addEventListener('click', ()=>{
-    tabs.forEach(x=>x.classList.remove('active'));
-    t.classList.add('active');
-    currentPeriod = t.dataset.period;
-    renderBarChart();
-  });
-});
-
-/* bottom nav (simple scroll behavior) */
-document.getElementById('navHome').addEventListener('click', ()=> window.scrollTo({top:0,behavior:'smooth'}));
-document.getElementById('navShop').addEventListener('click', ()=> {
-  const shopPanel = document.querySelector('.side-panel .panel');
-  if (shopPanel) shopPanel.scrollIntoView({behavior:'smooth'});
-});
-document.getElementById('navProgress').addEventListener('click', ()=> {
-  const charts = document.querySelector('.charts');
-  if (charts) charts.scrollIntoView({behavior:'smooth'});
-});
-
-/* ---------------- Initialization ---------------- */
-(function init(){
-  // load storage
-  coins = parseInt(localStorage.getItem(LS_COINS) || '0', 10) || 0;
-  try{ sessions = JSON.parse(localStorage.getItem(LS_SESSIONS) || '[]'); } catch(e){ sessions = []; }
-  // initial UI
-  updateDisplay();
-  renderBarChart();
-  enableButtons();
-})();
-
+const LS_COINS='fp_coins',LS_SESS='fp_sessions';
+let secs=0,timer=null,isRun=false,startISO=null;
+let coins=parseInt(localStorage.getItem(LS_COINS)||'0',10)||0;
+let sess=JSON.parse(localStorage.getItem(LS_SESS)||'[]');
+const timeEl=document.getElementById('time'),coinEl=document.getElementById('coinCount'),pet=document.getElementById('petAnim'),status=document.getElementById('petStatus');
+const totalVal=document.getElementById('totalFocusVal'),ring=document.getElementById('ring');
+const R=140,C=2*Math.PI*R;ring.style.strokeDasharray=C;ring.style.strokeDashoffset=C;
+function fmt(s){const m=Math.floor(s/60).toString().padStart(2,'0');const ss=(s%60).toString().padStart(2,'0');return`${m}:${ss}`;}
+function fmtHM(t){const h=Math.floor(t/3600),m=Math.floor((t%3600)/60);return h>0?`${h} h ${m} m`:`${m} m`;}
+function totalSecs(){return sess.reduce((a,b)=>a+b.secs,0)+secs;}
+function updDisp(){timeEl.textContent=fmt(secs);ring.style.strokeDashoffset=C-(secs%60)/60*C;coinEl.textContent=coins;totalVal.textContent=fmtHM(totalSecs());updPet();}
+function updPet(){if(!pet)return;if(secs<30){pet.setSpeed(0.6);status.textContent="Your pet is sleepy...";}else if(secs<60){pet.setSpeed(1);status.textContent="Your pet is waking up!";}else{pet.setSpeed(1.5);status.textContent="Your pet is super happy!";}}
+function startT(){if(isRun)return;isRun=true;if(!startISO)startISO=new Date().toISOString();timer=setInterval(()=>{secs++;if(secs%10===0){coins++;localStorage.setItem(LS_COINS,coins);}updDisp();},1000);}
+function pauseT(){if(!isRun)return;isRun=false;clearInterval(timer);timer=null;updDisp();}
+function resetT(){if(secs>0&&startISO){sess.push({startISO,secs});localStorage.setItem(LS_SESS,JSON.stringify(sess));}
+secs=0;startISO=null;isRun=false;clearInterval(timer);timer=null;updDisp();drawChart();}
+document.getElementById('startBtn').onclick=startT;document.getElementById('pauseBtn').onclick=pauseT;document.getElementById('resetBtn').onclick=resetT;
+function react(spd,txt){if(!pet)return;pet.setSpeed(spd);status.textContent=txt;setTimeout(()=>updPet(),3000);}
+document.getElementById('feedBtn').onclick=()=>{if(coins>=10){coins-=10;localStorage.setItem(LS_COINS,coins);updDisp();react(2,'Yummy!');}else alert('Not enough coins');};
+document.getElementById('playBtn').onclick=()=>{if(coins>=15){coins-=15;localStorage.setItem(LS_COINS,coins);updDisp();react(2.4,'Having fun!');}else alert('Not enough coins');};
+document.getElementById('skinBtn').onclick=()=>{if(coins>=50){coins-=50;localStorage.setItem(LS_COINS,coins);updDisp();react(1.8,'New look!');}else alert('Not enough coins');};
+document.getElementById('boostBtn').onclick=()=>{if(coins>=6){coins-=6;coins++;localStorage.setItem(LS_COINS,coins);updDisp();react(1.6,'Boosted!');}else alert('Not enough coins');};
+function agg(){const m={};for(const s of sess){const d=new Date(s.startISO);if(!isNaN(d)){const k=d.toISOString().split('T')[0];m[k]=(m[k]||0)+s.secs;}}return m;}
+function daysAgo(n){const d=new Date();d.setDate(d.getDate()-n);return d;}
+function weekly(m){const l=[],dta=[];for(let i=6;i>=0;i--){const d=daysAgo(i),k=d.toISOString().split('T')[0];l.push(d.toLocaleDateString(undefined,{weekday:'short'}));dta.push(Math.round((m[k]||0)/60));}return{labels:l,data:dta};}
+function monthly(m){const l=[],dta=[],n=new Date();for(let i=5;i>=0;i--){const d=new Date(n.getFullYear(),n.getMonth()-i,1);l.push(d.toLocaleDateString(undefined,{month:'short'}));let t=0;for(const k in m){const dt=new Date(k);if(dt.getMonth()===d.getMonth()&&dt.getFullYear()===d.getFullYear())t+=m[k];}dta.push(Math.round(t/60));}return{labels:l,data:dta};}
+function yearly(m){const l=[],dta=[],n=new Date();for(let i=4;i>=0;i--){const y=n.getFullYear()-i;l.push(y);let t=0;for(const k in m){const dt=new Date(k);if(dt.getFullYear()===y)t+=m[k];}dta.push(Math.round(t/60));}return{labels:l,data:dta};}
+let curPeriod='daily';const barCtx=document.getElementById('barChart').getContext('2d');let barChart=null;
+function getBars(p){const m=agg();if(p==='daily'||p==='weekly')return weekly(m);if(p==='monthly')return monthly(m);return yearly(m);}
+function drawChart(){try{const b=getBars(curPeriod);if(barChart)barChart.destroy();barChart=new Chart(barCtx,{type:'bar',data:{labels:b.labels,datasets:[{data:b.data,backgroundColor:'#8de0c7'}]},options:{plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});const w=weekly(agg()).data.reduce((a,b)=>a+b,0)/7;document.getElementById('weeklyAvg').textContent=w.toFixed(1)+' min';}catch(e){console.warn(e);}}
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');curPeriod=t.dataset.period;drawChart();});
+function init(){coins=parseInt(localStorage.getItem(LS_COINS)||'0',10)||0;sess=JSON.parse(localStorage.getItem(LS_SESS)||'[]');updDisp();drawChart();}
+init();
 </script>
 </body>
 </html>
